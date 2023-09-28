@@ -1,0 +1,105 @@
+service: Quiztopia
+frameworkVersion: '3'
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: eu-north-1
+  profile: ${env:PROFILE}
+  iam:
+    role: ${env:USER}
+
+plugins:
+  - serverless-webpack
+
+package:
+  individually: true
+
+functions:
+  addQuestion:
+    handler: functions/quiz/addQuestion/index.handler
+    events:
+      - httpApi:
+        path: https://mbgi7afa12.execute-api.eu-north-1.amazonaws.com/api/quiz
+        method: POST
+  addQuiz:
+    handler: functions/quiz/addQuiz/index.handler
+    events:
+      - httpApi:
+        path: https://mbgi7afa12.execute-api.eu-north-1.amazonaws.com/api/quiz
+        method: POST
+  getQuiz:
+    handler: functions/quiz/getQuiz/index.handler
+    events:
+      - httpApi:
+        path: https://mbgi7afa12.execute-api.eu-north-1.amazonaws.com/api/quiz
+        method: GET
+  getQuizzes:
+    handler: functions/quiz/getQuizzes/index.handler
+    events:
+      - httpApi:
+        path: https://mbgi7afa12.execute-api.eu-north-1.amazonaws.com/api/quiz
+        method: GET
+  removeQuiz:
+    handler: functions/quiz/removeQuiz/index.handler
+    events:
+      - httpApi:
+        path: https://mbgi7afa12.execute-api.eu-north-1.amazonaws.com/api/quiz
+        method: DELETE
+  login:
+    handler: functions/auth/login/index.handler
+    events:
+      - httpApi:
+        path: https://mbgi7afa12.execute-api.eu-north-1.amazonaws.com/api/auth/login
+        method: POST
+  signup:
+    handler: functions/auth/signup/index.handler
+    events:
+      - httpApi:
+        path: https://mbgi7afa12.execute-api.eu-north-1.amazonaws.com/api/auth/signup
+        method: POST
+
+resources:
+  Resources:
+    quiztopia:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: quizzes
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: creatorID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+          - AttributeName: creatorID
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+    questions:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: questions
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: quizID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+          - AttributeName: quizID
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+    users:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: users
+        AttributeDefinitions:
+          - AttributeName: userName
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userName
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
