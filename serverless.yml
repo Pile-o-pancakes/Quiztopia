@@ -8,7 +8,7 @@ provider:
   region: eu-north-1
   profile: ${env:PROFILE}
   iam:
-    role: ${env:USER}
+    role: ${env:ROLE}
 
 plugins:
   - serverless-webpack
@@ -21,43 +21,43 @@ functions:
     handler: functions/quiz/addQuestion/index.handler
     events:
       - httpApi:
-        path: https://mbgi7afa12.execute-api.eu-north-1.amazonaws.com/api/quiz
+        path: ${env:API_URL}/api/quiz/question
         method: POST
   addQuiz:
     handler: functions/quiz/addQuiz/index.handler
     events:
       - httpApi:
-        path: https://mbgi7afa12.execute-api.eu-north-1.amazonaws.com/api/quiz
+        path: ${env:API_URL}/api/quiz
         method: POST
   getQuiz:
     handler: functions/quiz/getQuiz/index.handler
     events:
       - httpApi:
-        path: https://mbgi7afa12.execute-api.eu-north-1.amazonaws.com/api/quiz
+        path: ${env:API_URL}/api/quiz
         method: GET
   getQuizzes:
     handler: functions/quiz/getQuizzes/index.handler
     events:
       - httpApi:
-        path: https://mbgi7afa12.execute-api.eu-north-1.amazonaws.com/api/quiz
+        path: ${env:API_URL}/api/quiz
         method: GET
   removeQuiz:
     handler: functions/quiz/removeQuiz/index.handler
     events:
       - httpApi:
-        path: https://mbgi7afa12.execute-api.eu-north-1.amazonaws.com/api/quiz
+        path: ${env:API_URL}/api/quiz
         method: DELETE
   login:
     handler: functions/auth/login/index.handler
     events:
       - httpApi:
-        path: https://mbgi7afa12.execute-api.eu-north-1.amazonaws.com/api/auth/login
+        path: ${env:API_URL}/api/auth/login
         method: POST
   signup:
     handler: functions/auth/signup/index.handler
     events:
       - httpApi:
-        path: https://mbgi7afa12.execute-api.eu-north-1.amazonaws.com/api/auth/signup
+        path: ${env:API_URL}/api/auth/signup
         method: POST
 
 resources:
@@ -65,37 +65,33 @@ resources:
     quiztopia:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: quizzes
+        TableName: quiz
         AttributeDefinitions:
-          - AttributeName: id
+          - AttributeName: title
             AttributeType: S
-          - AttributeName: creatorID
+          - AttributeName: creatorName
             AttributeType: S
         KeySchema:
-          - AttributeName: id
+          - AttributeName: title
             KeyType: HASH
-          - AttributeName: creatorID
+          - AttributeName: creatorName
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
-    questions:
+    question:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: questions
+        TableName: question
         AttributeDefinitions:
-          - AttributeName: id
-            AttributeType: S
-          - AttributeName: quizID
+          - AttributeName: titleOfQuiz
             AttributeType: S
         KeySchema:
-          - AttributeName: id
+          - AttributeName: titleOfQuiz
             KeyType: HASH
-          - AttributeName: quizID
-            KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
-    users:
+    user:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: users
+        TableName: user
         AttributeDefinitions:
           - AttributeName: userName
             AttributeType: S

@@ -1,14 +1,55 @@
-const sendResponse = require ('./../../../responses/index');
+const jwt = require ('jsonwebtoken');
+const middy = require ('@middy/core');
+const { checkLoginBody } = require ('./../../../middleware/checkBody');
+const { verifyPassword } = require ('./../../../bcrypt/index');
+const { sendResponse } = require ('./../../../responses/index');
+const { db } = require ('./../../../services/db');
 
-exports.handler = async (event, context) => {
+const handler = middy()
+    .handler(async (event, context) => {
 
-    try {
+        if ('error' in event) {
 
-        
-        return sendResponse (200, true, "Nytt quiz sparat");
-    }
-    catch (error) {
+            return sendResponse (event.error, { success: false, message: event.errorMessage });
+        }
+    
+        const {userName, password } = event.body;
 
-        return sendResponse (error.statusCode, false, error.message)
-    }
-}
+        try {
+    
+            const data = await db.get ({
+                TableName: 'user',
+                Key: {
+                    userName: userName
+                }
+            }).promise();
+    
+            if (data.Item === undefined) {
+    
+                return sendResponse (200, { success: true, message: "Användaren finns inte" });
+            }
+    
+            const verifiedPassword = await verifyPassword(password, data.Item.password);
+    
+            if (verifiedPassword === true) {
+    
+                const token = jwt.sign({ id: data.Item.userID }, 'Pannkaka', {
+    
+                    expiresIn: '1h'
+                });
+    
+                return sendResponse (200, { success: true, message: "Inloggad", userName: userName, userID: data.Item.userID, token: token });
+            }
+            else {
+    
+                return sendResponse (400, { success: true, message: "Fel användarnamn eller lösenord" });
+            }
+        }
+        catch (error) {
+    
+            return sendResponse (400, { success: false, message: error.message })
+        }
+    })
+    .use(checkLoginBody);
+
+module.exports = { handler }

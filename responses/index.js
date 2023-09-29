@@ -1,15 +1,12 @@
-module.exports = function sendResponse (statusCode, success, message) {
+function sendResponse (statusCode, response) {
     
-    return {
-        statusCode: statusCode,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(
-          {
-            success: success,
-            message: message
-          }
-        )
-    };
+  return {
+    statusCode: statusCode,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(response),
+  };
 }
+
+module.exports = { sendResponse }
