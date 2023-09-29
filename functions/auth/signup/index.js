@@ -1,28 +1,43 @@
-// import { nanoid } from 'nanoid';
+import { nanoid } from 'nanoid';
 
-const sendResponse = require ('./../../../responses/index');
-// const createNewUser = require ('./../../../bcrypt/index');
+const { sendResponse } = require ('./../../../responses/index');
+const { hashPassword } = require ('./../../../bcrypt/index');
+const { db } = require ('./../../../services/db');
 
 exports.handler = async (event, context) => {
 
-    const { userName, password } = event.body;
+    const { userName, password } = JSON.parse(event.body);
     const userID = nanoid();
 
     try {
 
-        // const result = await createNewUser (userName, password, userID);
+        console.log('hashing...')
+        const hashedPassword = await hashPassword (password);
+        console.log('hashed')
 
-        if (result === true) {
+        if (hashedPassword === null || hashedPassword === undefined) {
 
-            return sendResponse (200, true, "Nytt konto skapat");
+            return sendResponse (400, { success: false, message: "Error" });
         }
         else {
 
-            return sendResponse (500, false, "Error");
+            console.log('nanoid är nu ' + userID + 'lösen är ' + password + ' och hash är ' + hashedPassword)
+            await db.put ({
+
+                TableName: 'user',
+                Item: {
+                    userName: userName,
+                    password: hashedPassword,
+                    userID: userID
+                }
+            }).promise ();
+
+            console.log('sparat i DB')
+            return sendResponse (200, { success: true, message: "Nytt konto skapat" });
         }
     }
     catch (error) {
 
-        return sendResponse (error.statusCode, false, error.message)
+        return sendResponse (400, { success: false, message: "Catch error" });
     }
 }
