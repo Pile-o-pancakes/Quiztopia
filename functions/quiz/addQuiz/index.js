@@ -1,6 +1,6 @@
 const middy = require ('@middy/core');
 const { checkQuizBody } = require ('./../../../middleware/checkBody');
-const { auth } = require ('./../../../middleware/auth');
+const { validateJWT } = require ('./../../../middleware/auth');
 const { sendResponse } = require ('./../../../responses/index');
 const { db } = require ('./../../../services/db');
 
@@ -9,10 +9,10 @@ const handler = middy()
 
         if ('error' in event) {
 
-            return sendResponse (event.error, { success: false, message: event.error.message });
+            return sendResponse (event.error, { success: false, message: event.errorMessage });
         }
 
-        const { title, userName } = JSON.parse(event.body);
+        const { title } = event.body;
     
         try {
     
@@ -28,7 +28,7 @@ const handler = middy()
     
             if (isTitleTaken.Items.length > 0) {
     
-                return sendResponse (400, { success: true, message: "Ett quiz med denna titeln finns redan" });
+                return sendResponse (400, { success: true, message: "Ett quiz med detta namnet finns redan" });
             }
             else {
     
@@ -36,7 +36,7 @@ const handler = middy()
                     TableName: 'quiz',
                     Item: {
                         title: title,
-                        creatorName: userName
+                        creatorName: event.userName
                     }
                 }).promise();
     
@@ -47,5 +47,8 @@ const handler = middy()
     
             return sendResponse (500, {success: false, message: error.message })
         }
-    }).use(auth)
+    })
+    .use(validateJWT)
     .use(checkQuizBody);
+
+module.exports = { handler }

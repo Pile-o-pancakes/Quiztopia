@@ -1,4 +1,4 @@
-import { nanoid } from 'nanoid';
+const { nanoid} = require ('nanoid');
 
 const middy = require ('@middy/core');
 const { checkLoginBody } = require ('./../../../middleware/checkBody');
@@ -11,10 +11,10 @@ const handler = middy()
 
         if ('error' in event) {
 
-            return sendResponse (event.error, { success: false, message: event.error.message });
+            return sendResponse (event.error, { success: false, message: event.errorMessage });
         }
 
-        const { userName, password } = JSON.parse(event.body);
+        const { userName, password } = event.body;
         const userID = nanoid();
     
         try {
@@ -49,4 +49,7 @@ const handler = middy()
     
             return sendResponse (400, { success: false, message: error.message });
         }
-    }).use(checkLoginBody);
+    })
+    .use(checkLoginBody);
+
+module.exports = { handler }

@@ -1,6 +1,6 @@
 const middy = require ('@middy/core');
 const { checkQuestionBody } = require ('./../../../middleware/checkBody');
-const { auth } = require ('./../../../middleware/auth');
+const { validateJWT } = require ('./../../../middleware/auth');
 const { sendResponse } = require ('./../../../responses/index');
 const { db } = require ('./../../../services/db');
 
@@ -9,10 +9,10 @@ const handler = middy()
 
         if ('error' in event) {
 
-            return sendResponse (event.error, { success: false, message: event.error.message });
+            return sendResponse (event.error, { success: false, message: event.errorMessage });
         }
 
-        const { quizTitle, creatorName, question, answer, longitude, latitude } = JSON.parse(event.body);
+        const { quizTitle, question, answer, longitude, latitude } = event.body;
     
         try {
     
@@ -48,5 +48,8 @@ const handler = middy()
     
             return sendResponse (500, { success: false, message: error.message });
         }
-    }).use(auth)
+    })
+    .use(validateJWT)
     .use(checkQuestionBody);
+
+module.exports = { handler }

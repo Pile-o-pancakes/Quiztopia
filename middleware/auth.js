@@ -11,12 +11,14 @@ const validateJWT = {
 
                 throw new Error();
             }
+            else {
 
-            const data = jwt.verify ('token', 'Pannkaka');
-            request.event.id = data.id;
-            request.event.userName = data.userName;
+                const data = jwt.verify ('token', 'Pannkaka');
+                request.event.id = data.id;
+                request.event.userName = data.userName;
 
-            return req.response;
+                return req.response;
+            }
         }
         catch (error) {
 

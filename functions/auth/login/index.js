@@ -10,11 +10,11 @@ const handler = middy()
 
         if ('error' in event) {
 
-            return sendResponse (event.error, { success: false, message: event.error.message });
+            return sendResponse (event.error, { success: false, message: event.errorMessage });
         }
-
-        const { userName, password } = JSON.parse (event.body);
     
+        const {userName, password } = event.body;
+
         try {
     
             const data = await db.get ({
@@ -51,3 +51,5 @@ const handler = middy()
         }
     })
     .use(checkLoginBody);
+
+module.exports = { handler }

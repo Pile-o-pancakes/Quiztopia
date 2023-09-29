@@ -2,20 +2,26 @@
 const checkLoginBody = {
     before: async (req) => {
 
+        req.event.body = JSON.parse(req.event.body);
+
         try {
 
-            if ('userName' in req.event.body == false ||
-                'password' in req.event.body == false) {
+            if (!req.event.body.hasOwnProperty ('userName') ||
+                !req.event.body.hasOwnProperty ('password')) {
 
                     req.event.error = '401';
-                    req.event.error.message = 'Användarnamn och lösenord krävs';
+                    req.event.errorMessage = 'Användarnamn och lösenord krävs';
                     return req.response;
                 }
+            else {
+
+                return req.response;
+            }
         }
         catch {
 
             req.event.error = '500';
-            req.event.error.message = 'Error';
+            req.event.errorMessage = 'Catch Error';
             return req.response;
         }
     },
@@ -30,14 +36,20 @@ const checkLoginBody = {
 const checkQuizBody = {
     before: async (req) => {
 
+        req.event.body = JSON.parse(req.event.body);
+
         try {
 
             if ('title' in req.event.body == false) {
 
                     req.event.error = '401';
-                    req.event.error.message = 'En titel krävs';
+                    req.event.errorMessage = 'En titel krävs';
                     return req.response;
                 }
+            else {
+
+                return req.response;
+            }
         }
         catch {
 
@@ -56,6 +68,8 @@ const checkQuizBody = {
 const checkQuestionBody = {
     before: async (req) => {
 
+        req.event.body = JSON.parse(req.event.body);
+
         try {
 
             if ('quizTitle' in req.event.body == false ||
@@ -65,9 +79,13 @@ const checkQuestionBody = {
                 'latitude' in req.event.body == false) {
 
                     req.event.error = '401';
-                    req.event.error.message = 'Data saknas';
+                    req.event.errorMessage = 'Data saknas';
                     return req.response;
-                }
+            }
+            else {
+
+                return req.response;
+            }
         }
         catch {
 
