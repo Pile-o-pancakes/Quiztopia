@@ -1,29 +1,40 @@
 import { nanoid } from 'nanoid';
 
+const middy = require ('@middy/core');
+const { checkLoginBody } = require ('./../../../middleware/checkBody');
 const { sendResponse } = require ('./../../../responses/index');
 const { hashPassword } = require ('./../../../bcrypt/index');
 const { db } = require ('./../../../services/db');
 
-exports.handler = async (event, context) => {
+const handler = middy()
+    .handler(async (event, context) => {
 
-    const { userName, password } = JSON.parse(event.body);
-    const userID = nanoid();
+        if ('error' in event) {
 
-    try {
-
-        console.log('hashing...')
-        const hashedPassword = await hashPassword (password);
-        console.log('hashed')
-
-        if (hashedPassword === null || hashedPassword === undefined) {
-
-            return sendResponse (400, { success: false, message: "Error" });
+            return sendResponse (event.error, { success: false, message: event.error.message });
         }
-        else {
 
-            console.log('nanoid är nu ' + userID + 'lösen är ' + password + ' och hash är ' + hashedPassword)
+        const { userName, password } = JSON.parse(event.body);
+        const userID = nanoid();
+    
+        try {
+    
+            const isNameTaken = await db.scan ({
+                TableName: 'user',
+                Key: {
+                    userName: "name"
+                }
+            }).promise();
+    
+            if (isNameTaken.Items.length > 0) {
+    
+                return sendResponse (400, { success: false, message: "Användarnamnet är upptaget" });
+            }
+    
+            const hashedPassword = await hashPassword (password);
+    
             await db.put ({
-
+    
                 TableName: 'user',
                 Item: {
                     userName: userName,
@@ -31,13 +42,11 @@ exports.handler = async (event, context) => {
                     userID: userID
                 }
             }).promise ();
-
-            console.log('sparat i DB')
+    
             return sendResponse (200, { success: true, message: "Nytt konto skapat" });
         }
-    }
-    catch (error) {
-
-        return sendResponse (400, { success: false, message: "Catch error" });
-    }
-}
+        catch (error) {
+    
+            return sendResponse (400, { success: false, message: error.message });
+        }
+    }).use(checkLoginBody);

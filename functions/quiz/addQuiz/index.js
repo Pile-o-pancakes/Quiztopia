@@ -1,43 +1,51 @@
-import { nanoid } from 'nanoid';
-
+const middy = require ('@middy/core');
+const { checkQuizBody } = require ('./../../../middleware/checkBody');
+const { auth } = require ('./../../../middleware/auth');
 const { sendResponse } = require ('./../../../responses/index');
 const { db } = require ('./../../../services/db');
 
-exports.handler = async (event, context) => {
+const handler = middy()
+    .handler (async (event, context) => {
 
-    const { title, userID } = JSON.parse(event.body);
+        if ('error' in event) {
 
-    try {
-
-        const usedTitle = await db.scan ({
-            TableName: 'quizzes',
-            Key: {
-                title: title
-            }
-        }).promise();
-
-        const quizID = nanoid();
-
-        if (usedTitle.Count > 0) {
-
-            return sendResponse (400, { success: true, message: "Ett quiz med denna titeln finns redan" });
+            return sendResponse (event.error, { success: false, message: event.error.message });
         }
-        else {
 
-            await db.put ({
-                TableName: 'quizzes',
-                Item: {
-                    id: quizID,
-                    creatorID: userID,
-                    title: title
+        const { title, userName } = JSON.parse(event.body);
+    
+        try {
+    
+            const isTitleTaken = await db.scan ({
+                TableName: 'quiz',
+                FilterExpression: "title = :t",
+                ExpressionAttributeValues: {
+                    ":t": {
+                        S: title
+                    }
                 }
             }).promise();
+    
+            if (isTitleTaken.Items.length > 0) {
+    
+                return sendResponse (400, { success: true, message: "Ett quiz med denna titeln finns redan" });
+            }
+            else {
+    
+                await db.put ({
+                    TableName: 'quiz',
+                    Item: {
+                        title: title,
+                        creatorName: userName
+                    }
+                }).promise();
+    
+                return sendResponse (200, { success: true, message: "Nytt quiz sparat" });
+            }
         }
-
-        return sendResponse (200, { success: true, message: "Nytt quiz sparat" });
-    }
-    catch (error) {
-
-        return sendResponse (500, {success: false, message: error.message })
-    }
-}
+        catch (error) {
+    
+            return sendResponse (500, {success: false, message: error.message })
+        }
+    }).use(auth)
+    .use(checkQuizBody);

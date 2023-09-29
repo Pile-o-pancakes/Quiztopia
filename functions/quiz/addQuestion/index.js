@@ -1,14 +1,52 @@
-const sendResponse = require ('./../../../responses/index');
+const middy = require ('@middy/core');
+const { checkQuestionBody } = require ('./../../../middleware/checkBody');
+const { auth } = require ('./../../../middleware/auth');
+const { sendResponse } = require ('./../../../responses/index');
+const { db } = require ('./../../../services/db');
 
-exports.handler = async (event, context) => {
+const handler = middy()
+    .handler (async (event, context) => {
 
-    try {
+        if ('error' in event) {
 
+            return sendResponse (event.error, { success: false, message: event.error.message });
+        }
+
+        const { quizTitle, creatorName, question, answer, longitude, latitude } = JSON.parse(event.body);
+    
+        try {
+    
+            const validQuiz = await db.scan ({
+                TableName: 'quiz',
+                Key: {
+                    title: quizTitle,
+                    creatorName: creatorName
+                }
+            }).promise();
+    
+            if (validQuiz.Items.length = 0) {
+    
+                return sendResponse (400, { success: false, message: "Inga quiz av denna användaren hittades" });
+            }
+            else {
+    
+                db.put ({
+                    TableName: 'question',
+                    Item: {
+                        titleOfQuiz: quizTitle,
+                        question: question,
+                        answer: answer,
+                        longitude: longitude,
+                        latitude: latitude
+                    }
+                }).promise();
         
-        return sendResponse (200, true, "Nytt quiz sparat");
-    }
-    catch (error) {
-
-        return sendResponse (error.statusCode, false, error.message)
-    }
-}
+                return sendResponse (200, { success: true, message: "Ny fråga sparad" });
+            }
+        }
+        catch (error) {
+    
+            return sendResponse (500, { success: false, message: error.message });
+        }
+    }).use(auth)
+    .use(checkQuestionBody);

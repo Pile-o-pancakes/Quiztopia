@@ -1,14 +1,18 @@
-const sendResponse = require ('./../../../responses/index');
+const { sendResponse } = require ('./../../../responses/index');
+const { db } = require ('./../../../services/db');
 
 exports.handler = async (event, context) => {
 
     try {
 
-        
-        return sendResponse (200, true, "Nytt quiz sparat");
+        const allQuizzes = await db.scan ({
+            TableName: 'quiz'
+        }).promise();
+
+        return sendResponse (200, { success: true, message: allQuizzes.Items });
     }
     catch (error) {
 
-        return sendResponse (error.statusCode, false, error.message)
+        return sendResponse (500, { success: false, message: error.message });
     }
 }
